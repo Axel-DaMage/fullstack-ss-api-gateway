@@ -20,31 +20,12 @@ jobs:
       - name: Build api-gateway
         run: mvn clean package -DskipTests
 
-      - name: Build bff
-        working-directory: ../fullstack-ss-bff
-        run: mvn clean package -DskipTests
-
-      - name: Set up Node.js for frontend
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-          working-directory: ../fullstack-ss-frontend
-
-      - name: Build frontend
-        working-directory: ../fullstack-ss-frontend
-        run: npm ci && npm run build
-
       - name: Create deployment package
         run: |
           mkdir -p deploy-edge
-          cp fullstack-ss-api-gateway/target/*.jar deploy-edge/api-gateway.jar
-          cp fullstack-ss-api-gateway/Dockerfile deploy-edge/api-gateway/Dockerfile
-          cp fullstack-ss-bff/target/*.jar deploy-edge/bff.jar
-          cp fullstack-ss-bff/Dockerfile deploy-edge/bff/Dockerfile
-          cp -r fullstack-ss-frontend/dist deploy-edge/frontend/dist
-          cp fullstack-ss-frontend/Dockerfile deploy-edge/frontend/Dockerfile
-          cp fullstack-ss-api-gateway/docker-compose.yml deploy-edge/docker-compose.yml
+          cp target/*.jar deploy-edge/api-gateway.jar
+          cp Dockerfile deploy-edge/api-gateway/Dockerfile
+          cp docker-compose.yml deploy-edge/docker-compose.yml
 
       - name: Copy files to EC2
         uses: appleboy/scp-action@master
