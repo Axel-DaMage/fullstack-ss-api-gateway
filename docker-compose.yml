@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    image: api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://bff:8081
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://pet-service:3001
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=http://geo-service:3002
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=http://match-service:3003
+    restart: unless-stopped
+    networks:
+      - edge-network
+    depends_on:
+      - bff
+
+  bff:
+    build:
+      context: ./bff
+      dockerfile: Dockerfile
+    image: bff:latest
+    container_name: bff
+    ports:
+      - "8081:8081"
+    environment:
+      - PET_SERVICE_URL=http://pet-service:3001
+      - GEO_SERVICE_URL=http://geo-service:3002
+      - MATCH_SERVICE_URL=http://match-service:3003
+      - SPRING_PROFILES_ACTIVE=prod
+    restart: unless-stopped
+    networks:
+      - edge-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: frontend:latest
+    container_name: frontend
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - edge-network
+
+networks:
+  edge-network:
+    driver: bridge
