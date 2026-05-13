@@ -2,10 +2,7 @@ version: '3.8'
 
 services:
   api-gateway:
-    build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
-    image: api-gateway:latest
+    image: axeldamage/fullstack-ss-api-gateway:latest
     container_name: api-gateway
     ports:
       - "8080:8080"
@@ -21,10 +18,7 @@ services:
       - bff
 
   bff:
-    build:
-      context: ./bff
-      dockerfile: Dockerfile
-    image: bff:latest
+    image: axeldamage/fullstack-ss-bff:latest
     container_name: bff
     ports:
       - "8081:8081"
@@ -38,13 +32,37 @@ services:
       - edge-network
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    image: frontend:latest
+    image: axeldamage/fullstack-ss-frontend:latest
     container_name: frontend
     ports:
       - "80:80"
+    restart: unless-stopped
+    networks:
+      - edge-network
+
+  pet-service:
+    image: axeldamage/fullstack-ss-pet-service:latest
+    container_name: pet-service
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    networks:
+      - edge-network
+
+  geo-service:
+    image: axeldamage/fullstack-ss-geo-service:latest
+    container_name: geo-service
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+    networks:
+      - edge-network
+
+  match-service:
+    image: axeldamage/fullstack-ss-match-service:latest
+    container_name: match-service
+    ports:
+      - "3003:3003"
     restart: unless-stopped
     networks:
       - edge-network
