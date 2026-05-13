@@ -1,0 +1,66 @@
+name: Deploy to EC2 Edge
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build api-gateway
+        run: mvn clean package -DskipTests
+
+      - name: Build bff
+        working-directory: ../fullstack-ss-bff
+        run: mvn clean package -DskipTests
+
+      - name: Set up Node.js for frontend
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          working-directory: ../fullstack-ss-frontend
+
+      - name: Build frontend
+        working-directory: ../fullstack-ss-frontend
+        run: npm ci && npm run build
+
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy-edge
+          cp fullstack-ss-api-gateway/target/*.jar deploy-edge/api-gateway.jar
+          cp fullstack-ss-api-gateway/Dockerfile deploy-edge/api-gateway/Dockerfile
+          cp fullstack-ss-bff/target/*.jar deploy-edge/bff.jar
+          cp fullstack-ss-bff/Dockerfile deploy-edge/bff/Dockerfile
+          cp -r fullstack-ss-frontend/dist deploy-edge/frontend/dist
+          cp fullstack-ss-frontend/Dockerfile deploy-edge/frontend/Dockerfile
+          cp fullstack-ss-api-gateway/docker-compose.yml deploy-edge/docker-compose.yml
+
+      - name: Copy files to EC2
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.EC2_EDGE_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "deploy-edge"
+          target: "/opt/edge"
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_EDGE_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/edge
+            docker-compose up -d --build

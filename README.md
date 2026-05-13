@@ -119,3 +119,58 @@ El API Gateway expone endpoints de monitoreo:
 - El sistema de Circuit Breaker protege contra fallos en cascada.
 - Los reintentos automáticos mejoran la resiliencia ante fallos transitorios.
 - Configuración de CORS flexible para desarrollo y producción.
+
+---
+
+## Despliegue en AWS EC2
+
+### Arquitectura
+
+| Instancia | Servicios | Tipo |
+|-----------|-----------|------|
+| Backend (t3.medium) | pet-service, geo-service, match-service | Backend Core |
+| Edge (t3.small) | api-gateway, bff, frontend | Edge & UI |
+| RDS (db.t3.micro) | 3 bases de datos | Database |
+
+### Pre-requisitos
+
+1. **RDS**: Crear las siguientes bases de datos:
+   - `pet_service`
+   - `geo_service`
+   - `match_service`
+
+2. **Instancias EC2**: 2 instancias con User Data:
+   - Backend: ejecutar `scripts/userdata-backend.sh`
+   - Edge: ejecutar `scripts/userdata-edge.sh`
+
+### Configuración de GitHub Secrets
+
+En Settings > Secrets del repositorio:
+
+| Secret | Descripción |
+|--------|-------------|
+| `EC2_EDGE_HOST` | IP pública instancia Edge |
+| `EC2_USERNAME` | Usuario SSH (ubuntu) |
+| `EC2_SSH_KEY` | Clave privada RSA |
+
+### Puertos requeridos (Security Group Edge)
+
+- 22 (SSH)
+- 80 (frontend)
+- 8080 (api-gateway)
+- 8081 (bff)
+
+### Despliegue automático
+
+El deploy se ejecuta automáticamente al hacer push a `main`:
+- Este repositorio desplieja a instancia **Edge** (api-gateway, bff, frontend)
+- El repositorio **pet-service** desplieja a instancia **Backend**
+
+### Verificación
+
+```bash
+# Ver servicios en Edge
+curl http://EDGE_IP:8080/api/pets      # via gateway
+curl http://EDGE_IP:8081/api/pets      # bff directo
+curl http://EDGE_IP:80                 # frontend
+```
