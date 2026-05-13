@@ -34,6 +34,15 @@ spring:
             - name: Fallback
               args:
                 fallbackUri: forward:/fallback/match-service
+        - id: bff-service
+          uri: http://bff:8081
+          predicates:
+            - Path=/api/**
+          filters:
+            - CircuitBreaker=bffCircuitBreaker
+            - name: Fallback
+              args:
+                fallbackUri: forward:/fallback/bff
       globalcors:
         corsConfigurations:
           '[/**]':
@@ -73,6 +82,11 @@ resilience4j:
           failureRateThreshold: 50
           waitDurationInOpenState: 10s
         matchServiceCircuitBreaker:
+          slidingWindowSize: 10
+          minimumNumberOfCalls: 5
+          failureRateThreshold: 50
+          waitDurationInOpenState: 10s
+        bffCircuitBreaker:
           slidingWindowSize: 10
           minimumNumberOfCalls: 5
           failureRateThreshold: 50
