@@ -109,3 +109,4 @@ logging:
     org.springframework.cloud.gateway: DEBUG
     com.sanosysalvos: INFO
     io.github.resilience4j: DEBUG
+    org.springframework.web: INFO
