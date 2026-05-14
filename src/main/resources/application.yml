@@ -12,6 +12,7 @@ spring:
           predicates:
             - Path=/api/pets/**
           filters:
+            - JwtAuthentication
             - CircuitBreaker=petServiceCircuitBreaker
             - name: Fallback
               args:
@@ -21,6 +22,7 @@ spring:
           predicates:
             - Path=/api/locations/**
           filters:
+            - JwtAuthentication
             - CircuitBreaker=geoServiceCircuitBreaker
             - name: Fallback
               args:
@@ -30,6 +32,7 @@ spring:
           predicates:
             - Path=/api/matching/**
           filters:
+            - JwtAuthentication
             - CircuitBreaker=matchServiceCircuitBreaker
             - name: Fallback
               args:
@@ -39,6 +42,7 @@ spring:
           predicates:
             - Path=/api/**
           filters:
+            - JwtAuthentication
             - CircuitBreaker=bffCircuitBreaker
             - name: Fallback
               args:
