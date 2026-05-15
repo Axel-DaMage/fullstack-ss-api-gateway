@@ -43,6 +43,11 @@ jobs:
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
+              "mkdir -p /opt/sanossalvos",
+              "curl -fsSL -o /opt/sanossalvos/docker-compose.prod.yml https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.prod.yml",
+              "cat > /opt/sanossalvos/.env <<'EOF'",
+              "${{ secrets.PRODUCTION_ENV }}",
+              "EOF",
               "cd /opt/sanossalvos",
               "echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin",
               "docker pull d4mag3/fullstack-ss-pet-service:latest",
