@@ -38,12 +38,12 @@ jobs:
             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
             # Pull todas las imágenes desde Docker Hub
-            docker pull axeldamage/fullstack-ss-pet-service:latest
-            docker pull axeldamage/fullstack-ss-geo-service:latest
-            docker pull axeldamage/fullstack-ss-match-service:latest
-            docker pull axeldamage/fullstack-ss-bff:latest
-            docker pull axeldamage/fullstack-ss-api-gateway:latest
-            docker pull axeldamage/fullstack-ss-frontend:latest
+            docker pull d4mag3/fullstack-ss-pet-service:latest
+            docker pull d4mag3/fullstack-ss-geo-service:latest
+            docker pull d4mag3/fullstack-ss-match-service:latest
+            docker pull d4mag3/fullstack-ss-bff:latest
+            docker pull d4mag3/fullstack-ss-api-gateway:latest
+            docker pull d4mag3/fullstack-ss-frontend:latest
 
             # Levantar todo el stack
             docker compose -f docker-compose.prod.yml up -d
