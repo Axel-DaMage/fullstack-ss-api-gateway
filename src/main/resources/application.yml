@@ -12,36 +12,40 @@ spring:
           predicates:
             - Path=/api/pets/**
           filters:
-            - CircuitBreaker=petServiceCircuitBreaker
-            - name: Fallback
+            - JwtAuthentication
+            - name: CircuitBreaker
               args:
+                name: petServiceCircuitBreaker
                 fallbackUri: forward:/fallback/pet-service
         - id: geo-service
           uri: http://geo-service:3002
           predicates:
             - Path=/api/locations/**
           filters:
-            - CircuitBreaker=geoServiceCircuitBreaker
-            - name: Fallback
+            - JwtAuthentication
+            - name: CircuitBreaker
               args:
+                name: geoServiceCircuitBreaker
                 fallbackUri: forward:/fallback/geo-service
         - id: match-service
           uri: http://match-service:3003
           predicates:
             - Path=/api/matching/**
           filters:
-            - CircuitBreaker=matchServiceCircuitBreaker
-            - name: Fallback
+            - JwtAuthentication
+            - name: CircuitBreaker
               args:
+                name: matchServiceCircuitBreaker
                 fallbackUri: forward:/fallback/match-service
         - id: bff-service
-          uri: http://bff:8081
+          uri: http://bff-service:8081
           predicates:
             - Path=/api/**
           filters:
-            - CircuitBreaker=bffCircuitBreaker
-            - name: Fallback
+            - JwtAuthentication
+            - name: CircuitBreaker
               args:
+                name: bffCircuitBreaker
                 fallbackUri: forward:/fallback/bff
       globalcors:
         corsConfigurations:
