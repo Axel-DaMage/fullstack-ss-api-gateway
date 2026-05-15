@@ -1,0 +1,187 @@
+# ============================================
+# Docker Compose - Producción AWS (EC2)
+# ============================================
+# Usa imágenes pre-construidas desde Docker Hub
+# Variables de entorno se configuran en el .env del servidor
+# ============================================
+
+services:
+  # ==========================================
+  # Bases de datos MySQL
+  # ==========================================
+  mysql-pet:
+    image: mysql:8.0
+    container_name: mysql-pet-service
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-password}
+      MYSQL_DATABASE: pet_service
+    volumes:
+      - mysql-pet-data:/var/lib/mysql
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-geo:
+    image: mysql:8.0
+    container_name: mysql-geo-service
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-password}
+      MYSQL_DATABASE: geo_service
+    volumes:
+      - mysql-geo-data:/var/lib/mysql
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-match:
+    image: mysql:8.0
+    container_name: mysql-match-service
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-password}
+      MYSQL_DATABASE: match_service
+    volumes:
+      - mysql-match-data:/var/lib/mysql
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ==========================================
+  # Microservicios (imágenes de Docker Hub)
+  # ==========================================
+  pet-service:
+    image: axeldamage/fullstack-ss-pet-service:latest
+    container_name: pet-service
+    environment:
+      - DB_HOST=mysql-pet
+      - DB_PORT=3306
+      - DB_NAME=pet_service
+      - DB_USER=root
+      - DB_PASS=${DB_ROOT_PASSWORD:-password}
+      - PORT=3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      mysql-pet:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  geo-service:
+    image: axeldamage/fullstack-ss-geo-service:latest
+    container_name: geo-service
+    environment:
+      - DB_HOST=mysql-geo
+      - DB_PORT=3306
+      - DB_NAME=geo_service
+      - DB_USER=root
+      - DB_PASS=${DB_ROOT_PASSWORD:-password}
+      - PORT=3002
+    ports:
+      - "3002:3002"
+    depends_on:
+      mysql-geo:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  match-service:
+    image: axeldamage/fullstack-ss-match-service:latest
+    container_name: match-service
+    environment:
+      - DB_HOST=mysql-match
+      - DB_PORT=3306
+      - DB_NAME=match_service
+      - DB_USER=root
+      - DB_PASS=${DB_ROOT_PASSWORD:-password}
+      - PORT=3003
+      - PET_SERVICE_URL=http://pet-service:3001
+      - LOCATION_SERVICE_URL=http://geo-service:3002
+    ports:
+      - "3003:3003"
+    depends_on:
+      mysql-match:
+        condition: service_healthy
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # ==========================================
+  # BFF (Backend For Frontend)
+  # ==========================================
+  bff:
+    image: axeldamage/fullstack-ss-bff:latest
+    container_name: bff-service
+    environment:
+      - PET_SERVICE_URL=http://pet-service:3001
+      - LOCATION_SERVICE_URL=http://geo-service:3002
+      - MATCH_SERVICE_URL=http://match-service:3003
+      - PORT=8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      - pet-service
+      - geo-service
+      - match-service
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # ==========================================
+  # API Gateway
+  # ==========================================
+  api-gateway:
+    image: axeldamage/fullstack-ss-api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - bff
+      - pet-service
+      - geo-service
+      - match-service
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # ==========================================
+  # Frontend (Nginx + React)
+  # ==========================================
+  frontend:
+    image: axeldamage/fullstack-ss-frontend:latest
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+volumes:
+  mysql-pet-data:
+  mysql-geo-data:
+  mysql-match-data:
+
+networks:
+  backend-network:
+    driver: bridge

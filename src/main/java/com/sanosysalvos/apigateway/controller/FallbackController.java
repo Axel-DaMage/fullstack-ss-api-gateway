@@ -27,6 +27,11 @@ public class FallbackController {
         return buildFallbackResponse("Match Service temporalmente no disponible", "match-service");
     }
 
+    @GetMapping("/bff")
+    public ResponseEntity<Map<String, Object>> bffFallback() {
+        return buildFallbackResponse("BFF Service temporalmente no disponible", "bff");
+    }
+
     @GetMapping("/health")
     public ResponseEntity<Map<String, Object>> fallbackHealth() {
         return ResponseEntity.ok(Map.of(

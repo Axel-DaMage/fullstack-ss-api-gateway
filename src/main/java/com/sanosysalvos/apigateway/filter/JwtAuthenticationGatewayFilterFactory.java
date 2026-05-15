@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Component("JwtAuthentication")
 public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilterFactory<JwtAuthenticationGatewayFilterFactory.Config> {
 
@@ -22,12 +25,29 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
     }
 
     public static class Config {
+        private List<String> skipPaths = Arrays.asList(
+            "/api/health", "/api/dashboard", "/api/login", "/api/register",
+            "/api/pets", "/api/matches", "/api/locations"
+        );
+
+        public List<String> getSkipPaths() {
+            return skipPaths;
+        }
+
+        public void setSkipPaths(List<String> skipPaths) {
+            this.skipPaths = skipPaths;
+        }
     }
 
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+            String path = request.getURI().getPath();
+
+            if (config.getSkipPaths().stream().anyMatch(path::startsWith)) {
+                return chain.filter(exchange);
+            }
 
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 return onError(exchange, "No Authorization header", HttpStatus.UNAUTHORIZED);
@@ -44,7 +64,6 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
                 return onError(exchange, "Invalid JWT token", HttpStatus.UNAUTHORIZED);
             }
 
-            // Propagate the token to microservices
             ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                     .header("X-Auth-Token", token)
                     .build();
