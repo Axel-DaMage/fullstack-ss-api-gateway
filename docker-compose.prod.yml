@@ -76,8 +76,6 @@ services:
       - DB_USER=root
       - DB_PASS=${DB_ROOT_PASSWORD:-password}
       - PORT=3001
-    ports:
-      - "3001:3001"
     depends_on:
       mysql-pet:
         condition: service_healthy
@@ -95,8 +93,6 @@ services:
       - DB_USER=root
       - DB_PASS=${DB_ROOT_PASSWORD:-password}
       - PORT=3002
-    ports:
-      - "3002:3002"
     depends_on:
       mysql-geo:
         condition: service_healthy
@@ -116,8 +112,6 @@ services:
       - PORT=3003
       - PET_SERVICE_URL=http://pet-service:3001
       - LOCATION_SERVICE_URL=http://geo-service:3002
-    ports:
-      - "3003:3003"
     depends_on:
       mysql-match:
         condition: service_healthy
@@ -136,8 +130,6 @@ services:
       - LOCATION_SERVICE_URL=http://geo-service:3002
       - MATCH_SERVICE_URL=http://match-service:3003
       - PORT=8081
-    ports:
-      - "8081:8081"
     depends_on:
       - pet-service
       - geo-service
@@ -153,7 +145,7 @@ services:
     image: axeldamage/fullstack-ss-api-gateway:latest
     container_name: api-gateway
     ports:
-      - "8080:8080"
+      - "3002:8080"
     depends_on:
       - bff
       - pet-service
@@ -170,7 +162,7 @@ services:
     image: axeldamage/fullstack-ss-frontend:latest
     container_name: frontend
     ports:
-      - "80:80"
+      - "3001:80"
     depends_on:
       - api-gateway
     networks:
