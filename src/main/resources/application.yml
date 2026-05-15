@@ -6,6 +6,9 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 10s
       routes:
         - id: pet-service
           uri: http://pet-service:3001
@@ -63,6 +66,10 @@ spring:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
 resilience4j:
+  timelimiter:
+    config:
+      default:
+        timeoutDuration: 5s
   circuitbreaker:
     config:
       default:
