@@ -70,6 +70,15 @@ resilience4j:
     config:
       default:
         timeoutDuration: 5s
+    instances:
+      bffCircuitBreaker:
+        timeoutDuration: 10s
+      petServiceCircuitBreaker:
+        timeoutDuration: 10s
+      geoServiceCircuitBreaker:
+        timeoutDuration: 10s
+      matchServiceCircuitBreaker:
+        timeoutDuration: 10s
   circuitbreaker:
     config:
       default:
