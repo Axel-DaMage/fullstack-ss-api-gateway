@@ -1,25 +1,37 @@
 # API Gateway
 
-API Gateway para el proyecto **Sanos y Salvos**. Actúa como punto de entrada único para todos los microservicios, gestionando el enrutamiento, equilibrio de carga y mecanismos de resiliencia.
+API Gateway para el proyecto **Sanos y Salvos**. Actua como punto de entrada unico para todos los microservicios, gestionando el enrutamiento, autenticacion JWT y mecanismos de resiliencia.
 
 ## Objetivo
 
-El API Gateway centraliza las peticiones del cliente hacia los microservicios correspondientes, proporcionando una capa de seguridad, control y resiliencia. Implementa circuit breakers para manejar fallos en los servicios downstream y redirecciona a endpoints de fallback cuando los servicios no están disponibles.
+El API Gateway centraliza las peticiones del cliente hacia los microservicios correspondientes, proporcionando una capa de seguridad, control y resiliencia. Implementa circuit breakers para manejar fallos en los servicios downstream y redirecciona a endpoints de fallback cuando los servicios no estan disponibles.
 
 ## Arquitectura
 
-### Patrón Gateway
-El gateway actúa como puerta de enlace unificada:
+### Patron Gateway
+El gateway actua como puerta de enlace unificada:
 
 ```
-Frontend → API Gateway → Pet Service / Geo Service / Match Service / BFF
+Frontend -> API Gateway -> Pet Service / Geo Service / Match Service / BFF
 ```
 
 ### Componentes
 
 - [FallbackController](src/main/java/com/sanosysalvos/apigateway/controller/FallbackController.java): Controlador de respuestas alternativas
+- [AuthController](src/main/java/com/sanosysalvos/apigateway/controller/AuthController.java): Autenticacion JWT
+- [JwtUtil](src/main/java/com/sanosysalvos/apigateway/util/JwtUtil.java): Utilidad de generacion y validacion de tokens JWT
 - Configuration de Spring Cloud Gateway: Rutas y filtros
 - Resilience4j: Circuit Breaker y Retry
+
+### Eureka Discovery
+
+El API Gateway se registra en Eureka Server para descubrimiento de servicios. Todos los microservicios (pet-service, geo-service, match-service, bff) se registran automaticamente cuando Eureka Server esta disponible.
+
+Configuracion:
+```properties
+eureka.client.serviceUrl.defaultZone=http://eureka-server:8761/eureka/
+eureka.instance.preferIpAddress=true
+```
 
 ### Rutas configuradas
 
@@ -32,7 +44,7 @@ Frontend → API Gateway → Pet Service / Geo Service / Match Service / BFF
 
 ## Endpoints de Fallback
 
-| Método | Endpoint | Descripción |
+| Metodo | Endpoint | Descripcion |
 |--------|----------|-------------|
 | GET | `/fallback/pet-service` | Fallback para Pet Service |
 | GET | `/fallback/geo-service` | Fallback para Geo Service |
@@ -40,10 +52,34 @@ Frontend → API Gateway → Pet Service / Geo Service / Match Service / BFF
 | GET | `/fallback/bff` | Fallback para BFF |
 | GET | `/fallback/health` | Estado del sistema de fallback |
 
-## Características
+## Autenticacion
+
+| Metodo | Endpoint | Descripcion |
+|--------|----------|-------------|
+| POST | `/auth/login` | Autenticacion y obtencion de token JWT |
+
+Ejemplo de login:
+```json
+POST /auth/login
+{
+    "username": "admin",
+    "password": "admin123"
+}
+```
+
+Respuesta:
+```json
+{
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
+    "username": "admin",
+    "expiresIn": 3600000
+}
+```
+
+## Caracteristicas
 
 ### Circuit Breaker
-Implementa Resilience4j con configuración personalizada para cada servicio:
+Implementa Resilience4j con configuracion personalizada para cada servicio:
 
 - `slidingWindowSize`: 10
 - `minimumNumberOfCalls`: 5
@@ -51,27 +87,35 @@ Implementa Resilience4j con configuración personalizada para cada servicio:
 - `waitDurationInOpenState`: 10s
 
 ### Retry
-Configuración de reintentos para tolerancia a fallos:
+Configuracion de reintentos para tolerancia a fallos:
 
 - `maxAttempts`: 3
 - `waitDuration`: 1s
 - `exponentialBackoffMultiplier`: 2
 
+### JWT Authentication
+- Filtro personalizado que valida tokens JWT en las rutas protegidas
+- Las rutas `/auth/login` y `/fallback/**` no requieren autenticacion
+- Tokens con expiracion configurable
+
 ### CORS
-Configuración global de CORS que permite:
+Configuracion global de CORS que permite:
 - Origin: *
 - Methods: GET, POST, PUT, DELETE, OPTIONS
 - Headers: *
 
-## Tecnologías
+## Tecnologias
 
 - Java 17
 - Spring Boot 3
 - Spring Cloud Gateway
+- Spring Cloud Netflix Eureka Client
 - Resilience4j (Circuit Breaker, Retry)
+- JWT (jjwt)
 - Maven
+- JaCoCo (cobertura de pruebas)
 
-## Configuración
+## Configuracion
 
 ```yaml
 server:
@@ -91,7 +135,7 @@ spring:
             - CircuitBreaker=petServiceCircuitBreaker
 ```
 
-## Instalación
+## Instalacion
 
 ```bash
 mvn clean install
@@ -101,7 +145,12 @@ mvn spring-boot:run
 ## Pruebas
 
 ```bash
+# Ejecutar pruebas unitarias
 mvn test
+
+# Ejecutar pruebas con reporte de cobertura JaCoCo
+mvn clean verify
+# Reporte: target/site/jacoco/index.html
 ```
 
 ## Monitoreo
@@ -109,16 +158,17 @@ mvn test
 El API Gateway expone endpoints de monitoreo:
 
 - `/actuator/health`: Estado general del gateway
-- `/actuator/info`: Información de la aplicación
+- `/actuator/info`: Informacion de la aplicacion
 - `/actuator/circuitbreakers`: Estado de los circuit breakers
 
 ## Notas
 
-- El gateway implementa el patrón Facade proporcionando una interfaz unificada.
-- Proporciona respuestas estructuradas en JSON cuando los servicios no están disponibles.
+- El gateway implementa el patron Facade proporcionando una interfaz unificada.
+- Proporciona respuestas estructuradas en JSON cuando los servicios no estan disponibles.
 - El sistema de Circuit Breaker protege contra fallos en cascada.
-- Los reintentos automáticos mejoran la resiliencia ante fallos transitorios.
-- Configuración de CORS flexible para desarrollo y producción.
+- Los reintentos automaticos mejoran la resiliencia ante fallos transitorios.
+- Configuracion de CORS flexible para desarrollo y produccion.
+- Eureka Discovery: Los servicios se registran automaticamente cuando el servidor Eureka esta corriendo.
 
 ---
 
@@ -143,13 +193,13 @@ El API Gateway expone endpoints de monitoreo:
    - Backend: ejecutar `scripts/userdata-backend.sh`
    - Edge: ejecutar `scripts/userdata-edge.sh`
 
-### Configuración de GitHub Secrets
+### Configuracion de GitHub Secrets
 
 En Settings > Secrets del repositorio:
 
-| Secret | Descripción |
+| Secret | Descripcion |
 |--------|-------------|
-| `EC2_EDGE_HOST` | IP pública instancia Edge |
+| `EC2_EDGE_HOST` | IP publica instancia Edge |
 | `EC2_USERNAME` | Usuario SSH (ubuntu) |
 | `EC2_SSH_KEY` | Clave privada RSA |
 
@@ -160,13 +210,13 @@ En Settings > Secrets del repositorio:
 - 8080 (api-gateway)
 - 8081 (bff)
 
-### Despliegue automático
+### Despliegue automatico
 
-El deploy se ejecuta automáticamente al hacer push a `main`:
+El deploy se ejecuta automaticamente al hacer push a `main`:
 - Este repositorio desplieja a instancia **Edge** (api-gateway, bff, frontend)
 - El repositorio **pet-service** desplieja a instancia **Backend**
 
-### Verificación
+### Verificacion
 
 ```bash
 # Ver servicios en Edge
