@@ -25,43 +25,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        continue-on-error: true
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Find target EC2 instance
-        id: find-instance
-        continue-on-error: true
-        run: |
-          INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=${{ secrets.EC2_INSTANCE_NAME }}" \
-                      "Name=instance-state-name,Values=running" \
-            --query "Reservations[0].Instances[0].InstanceId" \
-            --output text || echo "None")
-
-          if [ "$INSTANCE_ID" != "None" ] && [ -n "$INSTANCE_ID" ]; then
-            echo "instance-id=$INSTANCE_ID" >> $GITHUB_OUTPUT
-            echo "instance-exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "instance-exists=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Get EC2 public IP
-        if: steps.find-instance.outputs.instance-exists == 'true'
-        run: |
-          PUBLIC_IP=$(aws ec2 describe-instances \
-            --instance-ids "${{ steps.find-instance.outputs.instance-id }}" \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text)
-          echo "EC2 public IP: $PUBLIC_IP"
-          echo "public-ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
-        id: get-ip
-
       - name: Deploy stack via SSM
-        if: steps.find-instance.outputs.instance-exists == 'true'
         run: |
-          INSTANCE_ID="${{ steps.find-instance.outputs.instance-id }}"
+          INSTANCE_ID="i-06676ccf8b20826c9"
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
