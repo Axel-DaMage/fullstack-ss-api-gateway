@@ -73,8 +73,9 @@ jobs:
               "docker compose -f docker-compose.prod.yml up -d",
               "sleep 20",
               "docker compose -f docker-compose.prod.yml ps",
-              "docker ps --filter name=pet-service --format status={{.Status}}",
-              "docker inspect pet-service --format={{.State.Status}} 2>/dev/null || echo pet-service not found"
+              "echo === DIRECT PET-SERVICE CHECK ===",
+              "docker exec pet-service curl -s -o /dev/null -w %{http_code} http://localhost:3001/health 2>&1 || echo curl_failed",
+              "docker exec pet-service curl -s http://localhost:3001/health 2>&1 || true"
             ]' \
             --region us-east-1 \
             --output text \
