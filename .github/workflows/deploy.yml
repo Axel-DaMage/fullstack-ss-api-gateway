@@ -88,3 +88,35 @@ jobs:
             --region us-east-1 \
             --query '{Status:Status,StatusCode:ResponseCode,Output:StandardOutputContent,Error:StandardErrorContent}' \
             --output table || echo "Could not get SSM result"
+
+      - name: Check pet-service status
+        if: steps.find-instance.outputs.instance-exists == 'true'
+        run: |
+          INSTANCE_ID="${{ steps.find-instance.outputs.instance-id }}"
+          python3 -c "
+import json
+commands = [
+    'echo === PET-SERVICE STATUS ===',
+    'docker ps --filter name=pet-service --format \"{{.Status}}\"',
+    'docker logs pet-service --tail 30 2>&1 || true',
+    'echo === NETWORK CHECK ===',
+    'docker network inspect backend-network --format \"{{range .Containers}}{{.Name}} {{.IPv4Address}}{{\\\"\\\\n\\\"}}{{end}}\" 2>/dev/null || true'
+]
+with open('/tmp/diag.json', 'w') as f:
+    json.dump({'commands': commands}, f)
+"
+          CMD_ID=$(aws ssm send-command \
+            --instance-ids "$INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --parameters file:///tmp/diag.json \
+            --region us-east-1 \
+            --output text \
+            --query 'Command.CommandId')
+          echo "Diag command sent: $CMD_ID"
+          aws ssm wait command-executed --command-id "$CMD_ID" --instance-id "$INSTANCE_ID" --region us-east-1 2>/dev/null || true
+          aws ssm get-command-invocation \
+            --command-id "$CMD_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --region us-east-1 \
+            --query '{Output:StandardOutputContent,Error:StandardErrorContent}' \
+            --output text || echo "Could not get diag result"
