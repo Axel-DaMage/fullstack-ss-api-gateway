@@ -73,10 +73,7 @@ jobs:
               "docker compose -f docker-compose.prod.yml up -d",
               "sleep 20",
               "docker compose -f docker-compose.prod.yml ps",
-              "echo === PET-SERVICE PROCESS CHECK ===",
-              "docker exec pet-service ss -tlnp 2>&1 || docker exec pet-service netstat -tlnp 2>&1 || echo no_netstat",
-              "docker exec pet-service cat /proc/1/cmdline 2>&1 || true",
-              "docker logs pet-service --tail 30 2>&1 || true"
+              "echo === PET-SERVICE LOGS === && docker logs pet-service 2>&1 | head -60"
             ]' \
             --region us-east-1 \
             --output text \
@@ -90,5 +87,5 @@ jobs:
             --command-id "$COMMAND_ID" \
             --instance-id "$INSTANCE_ID" \
             --region us-east-1 \
-            --query '{Status:Status,StatusCode:ResponseCode,Output:StandardOutputContent,Error:StandardErrorContent}' \
-            --output table || echo "Could not get SSM result"
+            --query 'StandardOutputContent' \
+            --output text || echo "Could not get SSM result"
