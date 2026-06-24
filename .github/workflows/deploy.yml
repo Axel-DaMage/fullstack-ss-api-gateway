@@ -47,7 +47,7 @@ jobs:
             --output text \
             --query 'Command.CommandId')
           echo "SSM command sent: $COMMAND_ID"
-          
+
           # Wait for SSM to complete and show result
           echo "Waiting for SSM command to complete..."
           aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" --region us-east-1 || true
