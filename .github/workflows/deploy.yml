@@ -45,6 +45,17 @@ jobs:
             echo "instance-exists=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: Get EC2 public IP
+        if: steps.find-instance.outputs.instance-exists == 'true'
+        run: |
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids "${{ steps.find-instance.outputs.instance-id }}" \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+          echo "EC2 public IP: $PUBLIC_IP"
+          echo "public-ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+        id: get-ip
+
       - name: Deploy stack via SSM
         if: steps.find-instance.outputs.instance-exists == 'true'
         run: |
