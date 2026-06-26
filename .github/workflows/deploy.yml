@@ -11,35 +11,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Copy docker-compose to EC2
-        uses: appleboy/scp-action@v0.1.7
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "docker-compose.prod.yml"
-          target: "/opt/sanossalvos"
-          overwrite: true
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          region: us-east-1
 
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1
+      - name: Upload docker-compose to S3
+        run: |
+          aws s3 cp docker-compose.prod.yml s3://sanossalvos-deploy-339713108279/docker-compose.prod.yml
+
+      - name: Deploy via SSM
         env:
           DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASS: ${{ secrets.DOCKER_PASSWORD }}
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          envs: DOCKER_USER,DOCKER_PASS
-          script: |
-            cd /opt/sanossalvos
-            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-            docker pull d4mag3/fullstack-ss-pet-service:latest
-            docker pull d4mag3/fullstack-ss-geo-service:latest
-            docker pull d4mag3/fullstack-ss-match-service:latest
-            docker pull d4mag3/fullstack-ss-bff:latest
-            docker pull d4mag3/fullstack-ss-api-gateway:latest
-            docker pull d4mag3/fullstack-ss-frontend:latest
-            docker compose -f docker-compose.prod.yml up -d
-            docker image prune -f
-            docker compose -f docker-compose.prod.yml ps
+        run: |
+          B64_USER=$(echo -n "$DOCKER_USER" | base64 -w0)
+          B64_PASS=$(echo -n "$DOCKER_PASS" | base64 -w0)
+          aws ssm send-command \
+            --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
+            --document-name "AWS-RunShellScript" \
+            --parameters '{"commands":[
+              "cd /opt/sanossalvos",
+              "aws s3 cp s3://sanossalvos-deploy-339713108279/docker-compose.prod.yml /opt/sanossalvos/docker-compose.prod.yml",
+              "echo '"$B64_USER"' | base64 -d > /tmp/docker_user",
+              "echo '"$B64_PASS"' | base64 -d > /tmp/docker_pass",
+              "docker login -u $(cat /tmp/docker_user) --password-stdin < /tmp/docker_pass",
+              "rm /tmp/docker_user /tmp/docker_pass",
+              "docker compose pull",
+              "docker compose up -d",
+              "docker image prune -f"
+            ]}' \
+            --region us-east-1
