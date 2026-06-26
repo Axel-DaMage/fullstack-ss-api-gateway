@@ -132,7 +132,7 @@ resilience4j:
 eureka:
   client:
     serviceUrl:
-      defaultZone: http://eureka-server:8761/eureka/
+      defaultZone: ${EUREKA_URL:http://54.68.101.229:8761/eureka/}
   instance:
     preferIpAddress: true
 

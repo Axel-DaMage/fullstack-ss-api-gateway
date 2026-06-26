@@ -1,0 +1,18 @@
+eureka:
+  client:
+    enabled: false
+
+spring:
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            pet-service:
+              - uri: http://localhost:3001
+            geo-service:
+              - uri: http://localhost:3002
+            match-service:
+              - uri: http://localhost:3003
+            bff:
+              - uri: http://localhost:8081
