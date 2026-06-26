@@ -55,6 +55,19 @@ class FallbackControllerTest {
     }
 
     @Test
+    void bffFallbackReturnsServiceUnavailable() {
+        webTestClient.get()
+            .uri("/fallback/bff")
+            .exchange()
+            .expectStatus().isEqualTo(HttpStatus.SERVICE_UNAVAILABLE)
+            .expectBody()
+            .jsonPath("$.error").isEqualTo(true)
+            .jsonPath("$.service").isEqualTo("bff")
+            .jsonPath("$.status").isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.value())
+            .jsonPath("$.timestamp").isNotEmpty();
+    }
+
+    @Test
     void fallbackHealthReturnsOk() {
         webTestClient.get()
             .uri("/fallback/health")
