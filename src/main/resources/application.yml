@@ -11,7 +11,7 @@ spring:
         response-timeout: 10s
       routes:
         - id: pet-service
-          uri: http://pet-service:3001
+          uri: lb://pet-service
           predicates:
             - Path=/api/pets/**
           filters:
@@ -21,7 +21,7 @@ spring:
                 name: petServiceCircuitBreaker
                 fallbackUri: forward:/fallback/pet-service
         - id: geo-service
-          uri: http://geo-service:3002
+          uri: lb://geo-service
           predicates:
             - Path=/api/locations/**
           filters:
@@ -31,7 +31,7 @@ spring:
                 name: geoServiceCircuitBreaker
                 fallbackUri: forward:/fallback/geo-service
         - id: match-service
-          uri: http://match-service:3003
+          uri: lb://match-service
           predicates:
             - Path=/api/matching/**
           filters:
@@ -41,7 +41,7 @@ spring:
                 name: matchServiceCircuitBreaker
                 fallbackUri: forward:/fallback/match-service
         - id: bff-service
-          uri: http://bff-service:8081
+          uri: lb://bff
           predicates:
             - Path=/api/**
           filters:
@@ -128,6 +128,13 @@ resilience4j:
         matchServiceRetry:
           maxAttempts: 3
           waitDuration: 2s
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    preferIpAddress: true
 
 management:
   endpoints:

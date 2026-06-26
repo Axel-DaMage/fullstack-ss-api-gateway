@@ -7,6 +7,18 @@
 
 services:
   # ==========================================
+  # Eureka Service Discovery
+  # ==========================================
+  eureka-server:
+    image: d4mag3/fullstack-ss-eureka-server:latest
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - backend-network
+    restart: unless-stopped
+
+  # ==========================================
   # Bases de datos MySQL
   # ==========================================
   mysql-pet:
@@ -89,6 +101,8 @@ services:
       - DB_PASS=${DB_ROOT_PASSWORD:-password}
       - PORT=3001
     depends_on:
+      eureka-server:
+        condition: service_started
       mysql-pet:
         condition: service_healthy
     networks:
@@ -106,6 +120,8 @@ services:
       - DB_PASS=${DB_ROOT_PASSWORD:-password}
       - PORT=3002
     depends_on:
+      eureka-server:
+        condition: service_started
       mysql-geo:
         condition: service_healthy
     networks:
@@ -125,6 +141,8 @@ services:
       - PET_SERVICE_URL=http://pet-service:3001
       - LOCATION_SERVICE_URL=http://geo-service:3002
     depends_on:
+      eureka-server:
+        condition: service_started
       mysql-match:
         condition: service_healthy
     networks:
@@ -143,6 +161,7 @@ services:
       - MATCH_SERVICE_URL=http://match-service:3003
       - PORT=8081
     depends_on:
+      - eureka-server
       - pet-service
       - geo-service
       - match-service
@@ -159,6 +178,7 @@ services:
     ports:
       - "3002:8080"
     depends_on:
+      - eureka-server
       - bff
       - pet-service
       - geo-service
