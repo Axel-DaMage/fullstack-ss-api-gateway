@@ -145,13 +145,6 @@ management:
     circuitbreakers:
       enabled: true
 
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://eureka-server:8761/eureka/
-  instance:
-    preferIpAddress: true
-
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
