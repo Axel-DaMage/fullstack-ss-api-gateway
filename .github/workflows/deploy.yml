@@ -34,14 +34,14 @@ jobs:
             --instance-ids "${{ secrets.EC2_INSTANCE_ID }}" \
             --document-name "AWS-RunShellScript" \
             --parameters '{"commands":[
-              "cd /opt/sanossalvos",
-              "aws s3 cp s3://sanossalvos-deploy-339713108279/docker-compose.prod.yml /opt/sanossalvos/docker-compose.prod.yml",
+              "mkdir -p /opt/sanossalvos",
+              "aws s3 cp s3://sanossalvos-deploy-339713108279/docker-compose.prod.yml /opt/sanossalvos/docker-compose.yml",
               "echo '"$B64_USER"' | base64 -d > /tmp/docker_user",
               "echo '"$B64_PASS"' | base64 -d > /tmp/docker_pass",
               "docker login -u $(cat /tmp/docker_user) --password-stdin < /tmp/docker_pass",
               "rm /tmp/docker_user /tmp/docker_pass",
-              "docker compose pull",
-              "docker compose up -d",
+              "docker compose -f /opt/sanossalvos/docker-compose.yml pull",
+              "docker compose -f /opt/sanossalvos/docker-compose.yml up -d",
               "docker image prune -f"
             ]}' \
             --region us-east-1
