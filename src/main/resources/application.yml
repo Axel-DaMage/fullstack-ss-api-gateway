@@ -11,7 +11,7 @@ spring:
         response-timeout: 10s
       routes:
         - id: pet-service
-          uri: ${PET_SERVICE_URL:http://localhost:3001}
+          uri: ${PET_SERVICE_URL:http://pet-service:3001}
           predicates:
             - Path=/api/pets/**
           filters:
@@ -21,7 +21,7 @@ spring:
                 name: petServiceCircuitBreaker
                 fallbackUri: forward:/fallback/pet-service
         - id: geo-service
-          uri: ${GEO_SERVICE_URL:http://localhost:3002}
+          uri: ${GEO_SERVICE_URL:http://geo-service:3002}
           predicates:
             - Path=/api/locations/**
           filters:
@@ -31,7 +31,7 @@ spring:
                 name: geoServiceCircuitBreaker
                 fallbackUri: forward:/fallback/geo-service
         - id: match-service
-          uri: ${MATCH_SERVICE_URL:http://localhost:3003}
+          uri: ${MATCH_SERVICE_URL:http://match-service:3003}
           predicates:
             - Path=/api/matching/**
           filters:
@@ -41,7 +41,7 @@ spring:
                 name: matchServiceCircuitBreaker
                 fallbackUri: forward:/fallback/match-service
         - id: bff-service
-          uri: ${BFF_URL:http://localhost:8081}
+          uri: ${BFF_URL:http://bff:8081}
           predicates:
             - Path=/api/**
           filters:
