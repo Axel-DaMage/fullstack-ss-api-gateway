@@ -89,7 +89,6 @@ class JwtAuthenticationGatewayFilterFactoryTest {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.AUTHORIZATION, "Bearer token.invalido");
         when(request.getHeaders()).thenReturn(headers);
-        when(request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer token.invalido");
         when(jwtUtil.isTokenValid("token.invalido")).thenReturn(false);
         when(response.setStatusCode(HttpStatus.UNAUTHORIZED)).thenReturn(true);
 
@@ -105,7 +104,6 @@ class JwtAuthenticationGatewayFilterFactoryTest {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.AUTHORIZATION, "Bearer token.valido");
         when(request.getHeaders()).thenReturn(headers);
-        when(request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION)).thenReturn("Bearer token.valido");
         when(jwtUtil.isTokenValid("token.valido")).thenReturn(true);
         when(request.mutate()).thenReturn(mock(ServerHttpRequest.Builder.class));
 
