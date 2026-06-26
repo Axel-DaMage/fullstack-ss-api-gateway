@@ -5,6 +5,9 @@ spring:
   application:
     name: api-gateway
   cloud:
+    loadbalancer:
+      retry:
+        enabled: true
     gateway:
       httpclient:
         connect-timeout: 3000
@@ -133,8 +136,12 @@ eureka:
   client:
     serviceUrl:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+    initialInstanceInfoReplicationIntervalSeconds: 5
+    eurekaServiceUrlPollIntervalSeconds: 5
   instance:
     preferIpAddress: true
+    leaseRenewalIntervalInSeconds: 5
+    leaseExpirationDurationInSeconds: 15
 
 management:
   endpoints:
