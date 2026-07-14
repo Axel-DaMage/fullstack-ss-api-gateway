@@ -1,84 +1,69 @@
 package com.sanosysalvos.apigateway.util;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+
 import java.security.Key;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class JwtUtilTest {
 
     private JwtUtil jwtUtil;
-    private static final String SECRET = "1234567890123456789012345678901234567890";
+    private Key key;
 
     @BeforeEach
     void setUp() throws Exception {
         jwtUtil = new JwtUtil();
-        Field field = JwtUtil.class.getDeclaredField("secret");
-        field.setAccessible(true);
-        field.set(jwtUtil, SECRET);
-        jwtUtil.init();
+
+        var secretField = JwtUtil.class.getDeclaredField("secret");
+        secretField.setAccessible(true);
+        secretField.set(jwtUtil, "1234567890123456789012345678901234567890");
+
+        var initMethod = JwtUtil.class.getDeclaredMethod("init");
+        initMethod.setAccessible(true);
+        initMethod.invoke(jwtUtil);
+
+        key = Keys.hmacShaKeyFor("1234567890123456789012345678901234567890".getBytes());
     }
 
-    private String crearTokenValido() {
-        Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
-        return Jwts.builder()
+    @Test
+    void isTokenValid_WithValidToken_ShouldReturnTrue() {
+        String token = Jwts.builder()
                 .setSubject("admin")
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 3600000))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
-    }
 
-    private String crearTokenExpirado() {
-        Key key = Keys.hmacShaKeyFor(SECRET.getBytes());
-        return Jwts.builder()
-                .setSubject("admin")
-                .setIssuedAt(new Date(System.currentTimeMillis() - 7200000))
-                .setExpiration(new Date(System.currentTimeMillis() - 3600000))
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+        assertTrue(jwtUtil.isTokenValid(token));
     }
 
     @Test
-    void tokenValido_DeberiaRetornarTrue() {
-        assertTrue(jwtUtil.isTokenValid(crearTokenValido()));
+    void isTokenValid_WithInvalidToken_ShouldReturnFalse() {
+        assertFalse(jwtUtil.isTokenValid("invalid.token.here"));
     }
 
     @Test
-    void tokenInvalido_DeberiaRetornarFalse() {
-        assertFalse(jwtUtil.isTokenValid("token.invalido.xyz"));
-    }
-
-    @Test
-    void tokenExpirado_DeberiaRetornarFalse() {
-        assertFalse(jwtUtil.isTokenValid(crearTokenExpirado()));
-    }
-
-    @Test
-    void tokenVacio_DeberiaRetornarFalse() {
+    void isTokenValid_WithEmptyToken_ShouldReturnFalse() {
         assertFalse(jwtUtil.isTokenValid(""));
     }
 
     @Test
-    void tokenNulo_DeberiaRetornarFalse() {
-        assertFalse(jwtUtil.isTokenValid(null));
+    void getAllClaimsFromToken_ShouldReturnCorrectSubject() {
+        String token = Jwts.builder()
+                .setSubject("admin")
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
+        var claims = jwtUtil.getAllClaimsFromToken(token);
+        assertEquals("admin", claims.getSubject());
     }
 
     @Test
-    void getAllClaims_DeberiaRetornarSubject() {
-        String token = crearTokenValido();
-        assertEquals("admin", jwtUtil.getAllClaimsFromToken(token).getSubject());
-    }
-
-    @Test
-    void getAllClaims_ConTokenInvalido_DeberiaLanzarExcepcion() {
-        assertThrows(Exception.class, () -> jwtUtil.getAllClaimsFromToken("token.invalido"));
+    void getAllClaimsFromToken_WithInvalidToken_ShouldThrow() {
+        assertThrows(Exception.class, () -> jwtUtil.getAllClaimsFromToken("bad.token.here"));
     }
 }

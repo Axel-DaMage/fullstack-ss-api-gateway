@@ -1,14 +1,6 @@
 version: '3.8'
 
 services:
-  eureka-server:
-    build: ../fullstack-ss-eureka-server
-    container_name: eureka-server
-    ports:
-      - "8761:8761"
-    networks:
-      - edge-network
-
   api-gateway:
     image: axeldamage/fullstack-ss-api-gateway:latest
     container_name: api-gateway
@@ -23,7 +15,6 @@ services:
     networks:
       - edge-network
     depends_on:
-      - eureka-server
       - bff
 
   bff:

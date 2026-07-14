@@ -63,6 +63,7 @@ class FallbackControllerTest {
             .expectBody()
             .jsonPath("$.error").isEqualTo(true)
             .jsonPath("$.service").isEqualTo("bff")
+            .jsonPath("$.message").isEqualTo("BFF Service temporalmente no disponible")
             .jsonPath("$.status").isEqualTo(HttpStatus.SERVICE_UNAVAILABLE.value())
             .jsonPath("$.timestamp").isNotEmpty();
     }

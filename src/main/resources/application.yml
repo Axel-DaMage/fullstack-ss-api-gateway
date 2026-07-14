@@ -5,16 +5,10 @@ spring:
   application:
     name: api-gateway
   cloud:
-    loadbalancer:
-      retry:
-        enabled: true
     gateway:
-      httpclient:
-        connect-timeout: 3000
-        response-timeout: 10s
       routes:
         - id: pet-service
-          uri: lb://pet-service
+          uri: http://pet-service:3001
           predicates:
             - Path=/api/pets/**
           filters:
@@ -24,7 +18,7 @@ spring:
                 name: petServiceCircuitBreaker
                 fallbackUri: forward:/fallback/pet-service
         - id: geo-service
-          uri: lb://geo-service
+          uri: http://geo-service:3002
           predicates:
             - Path=/api/locations/**
           filters:
@@ -34,7 +28,7 @@ spring:
                 name: geoServiceCircuitBreaker
                 fallbackUri: forward:/fallback/geo-service
         - id: match-service
-          uri: lb://match-service
+          uri: http://match-service:3003
           predicates:
             - Path=/api/matching/**
           filters:
@@ -44,7 +38,7 @@ spring:
                 name: matchServiceCircuitBreaker
                 fallbackUri: forward:/fallback/match-service
         - id: bff-service
-          uri: lb://bff
+          uri: http://bff-service:8081
           predicates:
             - Path=/api/**
           filters:
@@ -69,19 +63,6 @@ spring:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
 resilience4j:
-  timelimiter:
-    config:
-      default:
-        timeoutDuration: 5s
-    instances:
-      bffCircuitBreaker:
-        timeoutDuration: 10s
-      petServiceCircuitBreaker:
-        timeoutDuration: 10s
-      geoServiceCircuitBreaker:
-        timeoutDuration: 10s
-      matchServiceCircuitBreaker:
-        timeoutDuration: 10s
   circuitbreaker:
     config:
       default:
@@ -132,17 +113,6 @@ resilience4j:
           maxAttempts: 3
           waitDuration: 2s
 
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
-    initialInstanceInfoReplicationIntervalSeconds: 5
-    eurekaServiceUrlPollIntervalSeconds: 5
-  instance:
-    preferIpAddress: true
-    leaseRenewalIntervalInSeconds: 5
-    leaseExpirationDurationInSeconds: 15
-
 management:
   endpoints:
     web:
@@ -151,6 +121,13 @@ management:
   health:
     circuitbreakers:
       enabled: true
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    preferIpAddress: true
 
 logging:
   level:
