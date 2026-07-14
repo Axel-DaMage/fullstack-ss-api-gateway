@@ -124,6 +124,7 @@ management:
 
 eureka:
   client:
+    enabled: false
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/
   instance:
