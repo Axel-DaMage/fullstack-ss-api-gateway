@@ -10,7 +10,7 @@ RUN mvn dependency:go-offline -B
 
 # Copiar código fuente y compilar
 COPY src ./src
-RUN mvn clean package -DskipTests -B
+RUN mvn clean package -Dmaven.test.skip=true -B
 
 # ============================================
 # Runtime stage - Imagen mínima de producción
