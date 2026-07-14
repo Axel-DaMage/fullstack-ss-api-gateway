@@ -26,7 +26,7 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
 
     public static class Config {
         private List<String> skipPaths = Arrays.asList(
-            "/api/health", "/api/dashboard", "/api/login", "/api/register",
+            "/api/auth", "/api/health", "/api/dashboard", "/api/login", "/api/register",
             "/api/pets", "/api/matches", "/api/locations"
         );
 
