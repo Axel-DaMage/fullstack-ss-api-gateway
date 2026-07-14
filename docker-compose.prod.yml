@@ -67,7 +67,7 @@ services:
   # Microservicios (imágenes de Docker Hub)
   # ==========================================
   pet-service:
-    image: axeldamage/fullstack-ss-pet-service:latest
+    image: d4mag3/fullstack-ss-pet-service:latest
     container_name: pet-service
     environment:
       - DB_HOST=mysql-pet
@@ -86,7 +86,7 @@ services:
     restart: unless-stopped
 
   geo-service:
-    image: axeldamage/fullstack-ss-geo-service:latest
+    image: d4mag3/fullstack-ss-geo-service:latest
     container_name: geo-service
     environment:
       - DB_HOST=mysql-geo
@@ -105,7 +105,7 @@ services:
     restart: unless-stopped
 
   match-service:
-    image: axeldamage/fullstack-ss-match-service:latest
+    image: d4mag3/fullstack-ss-match-service:latest
     container_name: match-service
     environment:
       - DB_HOST=mysql-match
@@ -129,7 +129,7 @@ services:
   # BFF (Backend For Frontend)
   # ==========================================
   bff:
-    image: axeldamage/fullstack-ss-bff:latest
+    image: d4mag3/fullstack-ss-bff:latest
     container_name: bff-service
     environment:
       - PET_SERVICE_URL=http://pet-service:3001
@@ -150,7 +150,7 @@ services:
   # API Gateway
   # ==========================================
   api-gateway:
-    image: axeldamage/fullstack-ss-api-gateway:latest
+    image: d4mag3/fullstack-ss-api-gateway:latest
     container_name: api-gateway
     ports:
       - "8080:8080"
@@ -167,7 +167,7 @@ services:
   # Frontend (Nginx + React)
   # ==========================================
   frontend:
-    image: axeldamage/fullstack-ss-frontend:latest
+    image: d4mag3/fullstack-ss-frontend:latest
     container_name: frontend
     ports:
       - "80:80"
